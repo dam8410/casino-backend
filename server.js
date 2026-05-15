@@ -8,13 +8,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ CONNECT TO MONGO FIRST
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("✅ DB Connected"))
-.catch(err => console.log("❌ DB Error:", err));
+// ✅ CONNECT TO MONGO
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ DB Connected");
+  })
+  .catch(err => {
+    console.log("❌ DB Error:", err);
+  });
 
 // ✅ USER MODEL
 const User = mongoose.model("User", {
@@ -29,11 +30,11 @@ app.get("/test", (req, res) => {
   res.send("TEST ROUTE WORKING");
 });
 
-// ✅ CREATE ADMIN (ONLY ONE VERSION!)
+// ✅ CREATE ADMIN
 app.get("/create-admin-final", async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      return res.send("❌ DB not connected yet");
+      return res.send("❌ DB NOT CONNECTED");
     }
 
     const hash = await bcrypt.hash("F@@tba118410", 10);
@@ -55,3 +56,38 @@ app.get("/create-admin-final", async (req, res) => {
 });
 
 // ✅ LOGIN ROUTE
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username });
+    if (!user) return res.json({ success: false });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.json({ success: false });
+
+    res.json({
+      success: true,
+      user: {
+        username: user.username,
+        tokens: user.tokens,
+        isAdmin: user.isAdmin
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false });
+  }
+});
+
+// ✅ ROOT ROUTE
+app.get("/", (req, res) => {
+  res.send("Casino backend running");
+});
+
+// ✅ START SERVER
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+  console.log("🚀 Server running on port", PORT);
+});
