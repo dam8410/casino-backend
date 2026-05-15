@@ -61,18 +61,23 @@ app.post("/login", async (req, res) => {
 
 // ✅ CREATE ADMIN
 app.get("/create-admin-final", async (req, res) => {
-  const hash = await bcrypt.hash("F@@tba118410", 10);
+  try {
+    const hash = await bcrypt.hash("F@@tba118410", 10);
 
-  await User.deleteMany({ username: "DAM8410" });
+    await User.deleteMany({ username: "DAM8410" });
 
-  await User.create({
-    username: "DAM8410",
-    password: hash,
-    tokens: 100000000,
-    isAdmin: true
-  });
+    await User.create({
+      username: "DAM8410",
+      password: hash,
+      tokens: 100000000,
+      isAdmin: true
+    });
 
-  res.send("ADMIN CREATED");
+    res.send("✅ ADMIN CREATED");
+  } catch (err) {
+    console.log("ERROR:", err);
+    res.send("ERROR: " + err.message);
+  }
 });
 
 // ✅ START SERVER
