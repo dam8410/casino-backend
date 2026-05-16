@@ -57,13 +57,23 @@ app.get("/create-admin-final", async (req, res) => {
 // ✅ LOGIN ROUTE
 app.post("/login", async (req, res) => {
   try {
+    console.log("LOGIN ATTEMPT:", req.body); // ✅ ADD THIS
+
     const { username, password } = req.body;
 
     const user = await User.findOne({ username });
-    if (!user) return res.json({ success: false });
+    if (!user) {
+      console.log("❌ USER NOT FOUND");
+      return res.json({ success: false });
+    }
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.json({ success: false });
+
+    console.log("PASSWORD MATCH:", valid); // ✅ ADD THIS
+
+    if (!valid) {
+      return res.json({ success: false });
+    }
 
     res.json({
       success: true,
