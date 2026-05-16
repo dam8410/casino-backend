@@ -14,7 +14,8 @@ mongoose.connect(process.env.MONGO_URI)
     console.log("✅ DB Connected");
   })
   .catch(err => {
-    console.log("❌ DB Error:", err);
+    console.log("❌ DB Error:");
+    console.log(err);   // VERY IMPORTANT
   });
 
 // ✅ USER MODEL
