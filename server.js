@@ -36,10 +36,10 @@ app.get("/create-admin-final", async (req, res) => {
   try {
     const hash = await bcrypt.hash("F@@tba118410", 10);
 
-    // ✅ DELETE ALL USERS FIRST (VERY IMPORTANT)
+    // ✅ DELETE EVERYTHING
     await User.deleteMany({});
 
-    // ✅ CREATE FRESH USER
+    // ✅ CREATE CLEAN USER
     await User.create({
       username: "DAM8410",
       password: hash,
@@ -47,7 +47,7 @@ app.get("/create-admin-final", async (req, res) => {
       isAdmin: true
     });
 
-    res.send("✅ ADMIN RESET & CREATED");
+    res.send("✅ ADMIN RESET & CREATED CLEAN");
   } catch (err) {
     console.log(err);
     res.send("ERROR: " + err.message);
