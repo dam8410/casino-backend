@@ -34,14 +34,12 @@ app.get("/test", (req, res) => {
 // ✅ CREATE ADMIN
 app.get("/create-admin-final", async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.send("❌ DB NOT CONNECTED");
-    }
-
     const hash = await bcrypt.hash("F@@tba118410", 10);
 
-    await User.deleteMany({ username: "DAM8410" });
+    // ✅ DELETE ALL USERS FIRST (VERY IMPORTANT)
+    await User.deleteMany({});
 
+    // ✅ CREATE FRESH USER
     await User.create({
       username: "DAM8410",
       password: hash,
@@ -49,9 +47,9 @@ app.get("/create-admin-final", async (req, res) => {
       isAdmin: true
     });
 
-    res.send("✅ ADMIN CREATED");
+    res.send("✅ ADMIN RESET & CREATED");
   } catch (err) {
-    console.log("ERROR:", err);
+    console.log(err);
     res.send("ERROR: " + err.message);
   }
 });
