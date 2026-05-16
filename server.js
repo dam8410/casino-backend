@@ -1,4 +1,3 @@
-console.log("🔥 NEW BACKEND VERSION RUNNING 🔥");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -8,6 +7,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// ✅ DEBUG START
+console.log("🔥 NEW BACKEND VERSION RUNNING 🔥");
 
 // ✅ CONNECT TO MONGO
 mongoose.connect(process.env.MONGO_URI)
@@ -27,15 +29,15 @@ app.get("/test", (req, res) => {
   res.send("TEST ROUTE WORKING");
 });
 
-// ✅ CREATE ADMIN (RESET USER CLEAN)
+// ✅ RESET ADMIN USER
 app.get("/create-admin-final", async (req, res) => {
   try {
     const hash = await bcrypt.hash("F@@tba118410", 10);
 
-    // ✅ wipe all users
+    // ✅ wipe DB
     await User.deleteMany({});
 
-    // ✅ create clean user
+    // ✅ create clean admin
     await User.create({
       username: "DAM8410",
       password: hash,
@@ -50,14 +52,18 @@ app.get("/create-admin-final", async (req, res) => {
   }
 });
 
-// ✅ TEMP LOGIN FIX (BYPASS HASH CHECK)
+
+// ✅ DEBUG LOGIN ROUTE (FINAL)
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  console.log("LOGIN ATTEMPT:", username, password);
+  console.log("🔥 LOGIN ATTEMPT RAW:", req.body);
+  console.log("🔥 USERNAME:", JSON.stringify(username));
+  console.log("🔥 PASSWORD:", JSON.stringify(password));
 
-  // ✅ TEMP FORCE LOGIN SUCCESS (FINAL DEBUG STEP)
+  // ✅ FORCE SUCCESS (TEST)
   if (username === "DAM8410" && password === "F@@tba118410") {
+    console.log("✅ FORCE LOGIN SUCCESS");
     return res.json({
       success: true,
       user: {
@@ -68,7 +74,8 @@ app.post("/login", async (req, res) => {
     });
   }
 
-  return res.json({ success: false });
+  console.log("❌ LOGIN FAILED");
+  res.json({ success: false });
 });
 
 // ✅ ROOT
