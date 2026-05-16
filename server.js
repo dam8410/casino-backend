@@ -57,38 +57,29 @@ app.get("/create-admin-final", async (req, res) => {
 // ✅ LOGIN ROUTE
 app.post("/login", async (req, res) => {
   try {
-    console.log("LOGIN ATTEMPT:", req.body); // ✅ ADD THIS
-
     const { username, password } = req.body;
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      console.log("❌ USER NOT FOUND");
-      return res.json({ success: false });
+    console.log("LOGIN ATTEMPT:", username, password);
+
+    // 🔥 TEMP BYPASS (TEST ONLY)
+    if (username === "DAM8410" && password === "F@@tba118410") {
+      return res.json({
+        success: true,
+        user: {
+          username: "DAM8410",
+          tokens: 100000000,
+          isAdmin: true
+        }
+      });
     }
 
-    const valid = await bcrypt.compare(password, user.password);
+    return res.json({ success: false });
 
-    console.log("PASSWORD MATCH:", valid); // ✅ ADD THIS
-
-    if (!valid) {
-      return res.json({ success: false });
-    }
-
-    res.json({
-      success: true,
-      user: {
-        username: user.username,
-        tokens: user.tokens,
-        isAdmin: user.isAdmin
-      }
-    });
   } catch (err) {
     console.log(err);
     res.json({ success: false });
   }
 });
-
 // ✅ ROOT ROUTE
 app.get("/", (req, res) => {
   res.send("Casino backend running");
