@@ -2,16 +2,20 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const Stripe = require("stripe");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// ✅ CONNECT TO MONGO
+// ✅ STRIPE (uses environment variable)
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+// ✅ CONNECT TO DB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ DB Connected"))
-  .catch(err => console.log("❌ DB Error:", err));
+  .then(() => console.log("✅ Mongo Connected"))
+  .catch(err => console.log("DB Error:", err));
 
 // ✅ USER MODEL
 const User = mongoose.model("User", {
@@ -21,46 +25,27 @@ const User = mongoose.model("User", {
   isAdmin: Boolean
 });
 
+
+// ==========================
 // ✅ TEST ROUTE
+// ==========================
 app.get("/test", (req, res) => {
   res.send("✅ TEST ROUTE WORKING");
 });
 
-// ✅ CREATE / RESET ADMIN (REMOVE AFTER USE)
-app.get("/create-admin-final", async (req, res) => {
-  try {
-    const hash = await bcrypt.hash("F@@tba118410", 10);
 
-    await User.deleteMany({});
-
-    await User.create({
-      username: "DAM8410",
-      password: hash,
-      tokens: 100000000,
-      isAdmin: true
-    });
-
-    res.send("✅ ADMIN RESET COMPLETE");
-  } catch (err) {
-    console.log(err);
-    res.send("ERROR: " + err.message);
-  }
-});
-
-// ✅ SECURE LOGIN ROUTE
+// ==========================
+// ✅ LOGIN
+// ==========================
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
     const user = await User.findOne({ username });
-    if (!user) {
-      return res.json({ success: false });
-    }
+    if (!user) return res.json({ success: false });
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      return res.json({ success: false });
-    }
+    if (!valid) return res.json({ success: false });
 
     res.json({
       success: true,
@@ -72,36 +57,86 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (err) {
-    console.log(err);
+    console.error("LOGIN ERROR:", err);
     res.json({ success: false });
   }
 });
 
-// ✅ SAVE TOKENS (VERY IMPORTANT FOR GAME)
+
+// ==========================
+// ✅ UPDATE CHIPS
+// ==========================
 app.post("/update-tokens", async (req, res) => {
   try {
     const { username, tokens } = req.body;
 
-    await User.updateOne(
-      { username },
-      { tokens }
-    );
+    await User.updateOne({ username }, { tokens });
 
     res.json({ success: true });
+
   } catch (err) {
-    console.log(err);
+    console.error("TOKEN ERROR:", err);
     res.json({ success: false });
   }
 });
 
-// ✅ ROOT
-app.get("/", (req, res) => {
-  res.send("🎰 Casino Backend Running");
+
+// ==========================
+// ✅ STRIPE CHECKOUT (FIXED)
+// ==========================
+app.post("/create-checkout", async (req, res) => {
+  try {
+    console.log("✅ Stripe route hit");
+
+    // 🔴 Debug: confirm key exists
+    console.log("Stripe key:", process.env.STRIPE_SECRET_KEY ? "FOUND ✅" : "MISSING ❌");
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "100,000 Casino Chips"
+            },
+            unit_amount: 500
+          },
+          quantity: 1
+        }
+      ],
+
+      success_url: "https://project-pjv5i.vercel.app",
+      cancel_url: "https://project-pjv5i.vercel.app"
+    });
+
+    console.log("✅ Stripe session created:", session.url);
+
+    res.json({ url: session.url });
+
+  } catch (err) {
+    console.error("❌ STRIPE FULL ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
+
+
+// ==========================
+// ✅ ROOT
+// ==========================
+app.get("/", (req, res) => {
+  res.send("Casino Backend Running ✅");
+});
+
+
+// ==========================
 // ✅ START SERVER
+// ==========================
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-  console.log("🚀 Server running on port", PORT);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
