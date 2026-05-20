@@ -9,13 +9,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ STRIPE (uses environment variable)
+// ✅ STRIPE (IMPORTANT)
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ✅ CONNECT TO DB
+// ✅ CONNECT TO MONGO
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Mongo Connected"))
-  .catch(err => console.log("DB Error:", err));
+  .then(() => console.log("✅ DB Connected"))
+  .catch(err => console.log("❌ DB Error:", err));
 
 // ✅ USER MODEL
 const User = mongoose.model("User", {
@@ -25,18 +25,12 @@ const User = mongoose.model("User", {
   isAdmin: Boolean
 });
 
-
-// ==========================
 // ✅ TEST ROUTE
-// ==========================
 app.get("/test", (req, res) => {
   res.send("✅ TEST ROUTE WORKING");
 });
 
-
-// ==========================
 // ✅ LOGIN
-// ==========================
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -57,15 +51,12 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
+    console.log(err);
     res.json({ success: false });
   }
 });
 
-
-// ==========================
-// ✅ UPDATE CHIPS
-// ==========================
+// ✅ UPDATE TOKENS
 app.post("/update-tokens", async (req, res) => {
   try {
     const { username, tokens } = req.body;
@@ -73,23 +64,16 @@ app.post("/update-tokens", async (req, res) => {
     await User.updateOne({ username }, { tokens });
 
     res.json({ success: true });
-
   } catch (err) {
-    console.error("TOKEN ERROR:", err);
+    console.log(err);
     res.json({ success: false });
   }
 });
 
-
-// ==========================
-// ✅ STRIPE CHECKOUT (FIXED)
-// ==========================
+// ✅ ✅ ✅ STRIPE CHECKOUT ROUTE (THIS IS WHAT YOU WERE MISSING)
 app.post("/create-checkout", async (req, res) => {
   try {
     console.log("✅ Stripe route hit");
-
-    // 🔴 Debug: confirm key exists
-    console.log("Stripe key:", process.env.STRIPE_SECRET_KEY ? "FOUND ✅" : "MISSING ❌");
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -112,31 +96,25 @@ app.post("/create-checkout", async (req, res) => {
       cancel_url: "https://project-pjv5i.vercel.app"
     });
 
-    console.log("✅ Stripe session created:", session.url);
+    console.log("✅ Stripe session created");
 
     res.json({ url: session.url });
 
   } catch (err) {
-    console.error("❌ STRIPE FULL ERROR:", err.message);
+    console.error("❌ STRIPE ERROR:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-
-
-// ==========================
 // ✅ ROOT
-// ==========================
 app.get("/", (req, res) => {
-  res.send("Casino Backend Running ✅");
+  res.send("🎰 Casino Backend Running");
 });
 
-
-// ==========================
 // ✅ START SERVER
-// ==========================
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log("🚀 Server running on port", PORT);
 });
+``
