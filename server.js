@@ -7,7 +7,11 @@ const Stripe = require("stripe");
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 // ✅ STRIPE (IMPORTANT)
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -113,6 +117,36 @@ app.get("/", (req, res) => {
 
 // ✅ START SERVER
 const PORT = process.env.PORT || 3001;
+
+// ✅ STRIPE WEBHOOK (AUTO CREDIT CHIPS)
+app.post("/webhook", async (req, res) => {
+  try {
+    const event = req.body;
+
+    console.log("✅ Webhook received:", event.type);
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+
+      console.log("✅ Payment complete");
+
+      // ✅ TEMP: GIVE CHIPS TO TEST USER
+      await User.updateOne(
+        { username: "DAM8410" },
+        { $inc: { tokens: 100000 } }
+      );
+
+      console.log("✅ Chips added");
+    }
+
+    res.sendStatus(200);
+
+  } catch (err) {
+    console.error("❌ WEBHOOK ERROR:", err);
+    res.sendStatus(500);
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log("🚀 Server running on port", PORT);
